@@ -1,0 +1,89 @@
+service: alf-todoapi
+
+package:
+  artifact: .build/lambda/TodoAPI/lambda.zip
+
+custom:
+  todosTableName: todos-${self:provider.stage}
+
+provider:
+  name: aws
+  runtime: provided
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-west-2'}
+  environment:
+    TODOS_TABLE_NAME: "${self:custom.todosTableName}"
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - dynamodb:UpdateItem
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:DeleteItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:DescribeTable
+      Resource:
+        - { Fn::GetAtt: [TodosTable, Arn] }
+
+functions:
+  createTodo:
+    handler: create
+    memorySize: 256
+    events:
+      - http:
+          path: /todos
+          method: post
+          cors: true
+  readTodo:
+    handler: read
+    memorySize: 256
+    events:
+      - http:
+          path: /todos/{id}
+          method: get
+          cors: true
+  updateTodo:
+    handler: update
+    memorySize: 256
+    events:
+      - http:
+          path: /todos/{id}
+          method: put
+          cors: true
+  deleteTodo:
+    handler: delete
+    memorySize: 256
+    events:
+      - http:
+          path: /todos/{id}
+          method: delete
+          cors: true
+  listTodos:
+    handler: list
+    memorySize: 256
+    events:
+      - http:
+          path: /todos
+          method: get
+          cors: true
+
+resources:
+  Resources:
+    TodosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.todosTableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
