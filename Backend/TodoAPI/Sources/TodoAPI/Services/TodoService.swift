@@ -5,7 +5,7 @@
 //  Created by Alfian Losari on 30/06/20.
 //
 
-import AWSDynamoDB
+import SotoDynamoDB
 import Foundation
 
 public class TodoService {
@@ -27,7 +27,7 @@ public class TodoService {
     }
     
     public func getTodo(id: String) -> EventLoopFuture<Todo> {
-        let input = DynamoDB.GetItemInput(key: [Todo.DynamoDBField.id: DynamoDB.AttributeValue(s: id)], tableName: tableName)
+        let input = DynamoDB.GetItemInput(key: [Todo.DynamoDBField.id: DynamoDB.AttributeValue.s(id)], tableName: tableName)
         
         return db.getItem(input).flatMapThrowing { (output) -> Todo in
             if output.item == nil { throw APIError.todoNotFound }
@@ -62,13 +62,13 @@ public class TodoService {
                 "#updatedAt": Todo.DynamoDBField.updatedAt
             ],
             expressionAttributeValues: [
-                ":name": DynamoDB.AttributeValue(s: todo.name),
-                ":isCompleted": DynamoDB.AttributeValue(bool: todo.isCompleted),
-                ":dueDate": DynamoDB.AttributeValue(s: todo.dueDate?.iso8601 ?? ""),
-                ":updatedAt": DynamoDB.AttributeValue(s: todo.updatedAt?.iso8601 ?? ""),
+                ":name": DynamoDB.AttributeValue.s(todo.name),
+                ":isCompleted": DynamoDB.AttributeValue.bool(todo.isCompleted),
+                ":dueDate": DynamoDB.AttributeValue.s(todo.dueDate?.iso8601 ?? ""),
+                ":updatedAt": DynamoDB.AttributeValue.s(todo.updatedAt?.iso8601 ?? ""),
             
             ],
-            key: [Todo.DynamoDBField.id: DynamoDB.AttributeValue(s: todo.id)],
+            key: [Todo.DynamoDBField.id: DynamoDB.AttributeValue.s(todo.id)],
             returnValues: DynamoDB.ReturnValue.allNew,
             tableName: tableName,
             updateExpression: "SET #name = :name, #isCompleted = :isCompleted, #dueDate = :dueDate, #updatedAt = :updatedAt"
@@ -81,7 +81,7 @@ public class TodoService {
     
     public func deleteTodo(id: String) -> EventLoopFuture<Void> {
         let input = DynamoDB.DeleteItemInput(
-            key: [Todo.DynamoDBField.id: DynamoDB.AttributeValue(s: id)],
+            key: [Todo.DynamoDBField.id: DynamoDB.AttributeValue.s(id)],
             tableName: tableName
         )
         
