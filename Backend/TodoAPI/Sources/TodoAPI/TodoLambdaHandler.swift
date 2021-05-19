@@ -10,14 +10,14 @@ import AWSLambdaEvents
 import AWSLambdaRuntime
 import AsyncHTTPClient
 import NIO
-import AWSDynamoDB
+import SotoDynamoDB
 
 struct TodoLamdaHandler: EventLoopLambdaHandler {
     
     typealias In = APIGateway.Request
     typealias Out = APIGateway.Response
     
-    let db: AWSDynamoDB.DynamoDB
+    let db: SotoDynamoDB.DynamoDB
     let todoService: TodoService
     let httpClient: HTTPClient
     
@@ -33,14 +33,8 @@ struct TodoLamdaHandler: EventLoopLambdaHandler {
         )
         
         let tableName = Lambda.env("TODOS_TABLE_NAME") ?? ""
-        let region: Region
-        if let envRegion = Lambda.env("AWS_REGION") {
-            region = Region(rawValue: envRegion)
-        } else {
-            region = .uswest2
-        }
-        
-        let db = AWSDynamoDB.DynamoDB(region: region, httpClientProvider: .shared(httpClient))
+
+        let db = SotoDynamoDB.DynamoDB(client: AWSClient(httpClientProvider: .shared(httpClient)))
         let todoService = TodoService(db: db, tableName: tableName)
         
         self.httpClient = httpClient
